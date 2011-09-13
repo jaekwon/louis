@@ -28,8 +28,8 @@ def setup_project_user(project_username):
         # so that we don't get a yes/no prompt when checking out repos via ssh
         files.append(['Host *', 'StrictHostKeyChecking no'], '.ssh/config')
         run('mkdir log')
-        sudo('chmod 770 log')
-        sudo('chown %s:www-data log' % project_username)
+    sudo('chmod 770 log')
+    sudo('chown %s:www-data log' % project_username)
 
 
 def setup_project_virtualenv(project_username, target_directory='env', site_packages=False):
@@ -206,9 +206,9 @@ def update_project(project_name, project_username=None, branch='master', wsgi_fi
             run('git checkout %s' % branch)
             run('git pull')
             run('git submodule update')
-            run('/home/%s/env/bin/python manage.py migrate --merge --settings=%s' % (project_username, settings_module))
             if update_requirements:
                 install_project_requirements(project_username, '%s/deploy/requirements.txt' % project_dir)
+            run('/home/%s/env/bin/python manage.py migrate --merge --settings=%s' % (project_username, settings_module))
             run('touch %s' % wsgi_file_path)
             git_head = run('git rev-parse HEAD')
         with cd('/home/%s' % project_username):
