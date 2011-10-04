@@ -63,7 +63,7 @@ def install_apache():
     sudo('virtualenv --no-site-packages /var/www/virtualenv')
     sudo('echo "WSGIPythonHome /var/www/virtualenv" >> /etc/apache2/conf.d/wsgi-virtualenv')
     sudo('a2enmod ssl')
-    files.append('ServerName localhost', '/etc/apache2/httpd.conf',
+    files.append('/etc/apache2/httpd.conf', 'ServerName localhost', 
                  use_sudo=True)
     sudo('/etc/init.d/apache2 reload')
 

@@ -26,10 +26,10 @@ def setup_project_user(project_username):
         run('mkdir -p .ssh')
         run('ssh-keygen -t rsa -f .ssh/id_rsa -N ""')
         # so that we don't get a yes/no prompt when checking out repos via ssh
-        files.append(['Host *', 'StrictHostKeyChecking no'], '.ssh/config')
+        files.append('.ssh/config', ['Host *', 'StrictHostKeyChecking no'])
         run('mkdir log')
-    sudo('chmod 770 log')
-    sudo('chown %s:www-data log' % project_username)
+    sudo('chmod 770 ~%s/log' % project_username)
+    sudo('chown %s:www-data ~%s/log' % (project_username, project_username) )
 
 
 def setup_project_virtualenv(project_username, target_directory='env', site_packages=False):
@@ -124,7 +124,7 @@ def setup_project_apache(project_name, project_username, server_name, server_ali
         'branch': branch,
     }
     # apache config
-    for config_path in local('find $PWD -name "*.apache2"').split('\n'):
+    for config_path in local('find $PWD -name "*.apache2"', capture=True).split('\n'):
         d, sep, config_filename = config_path.rpartition('/')
         config_filename, dot, ext = config_filename.rpartition('.')
         config_filename = '%s-%s.%s' % (config_filename, branch, ext)
@@ -133,7 +133,7 @@ def setup_project_apache(project_name, project_username, server_name, server_ali
             files.upload_template(config_path, dest_path, context=context, use_sudo=True)
             sudo('a2ensite %s' % config_filename)
     # wsgi file
-    for wsgi_path in local('find $PWD -name "*.wsgi"').split('\n'):
+    for wsgi_path in local('find $PWD -name "*.wsgi"', capture=True).split('\n'):
         d, sep, wsgi_filename = wsgi_path.rpartition('/')
         wsgi_filename, dot, ext = wsgi_filename.rpartition('.')
         wsgi_filename = '%s-%s.%s' % (wsgi_filename, branch, ext)
@@ -154,7 +154,7 @@ def setup_project(project_name, git_url, apache_server_name, apache_server_alias
     """
     Creates a user for the project, checks out the code and does basic apache config.
     """
-    local_user = local('whoami')
+    local_user = local('whoami', capture=True)
     if not project_username:
         project_username =  '%s-%s' % (project_name, branch)
     setup_project_user(project_username)
@@ -173,7 +173,7 @@ def setup_project(project_name, git_url, apache_server_name, apache_server_alias
         git_head = run('git rev-parse HEAD')
     with cd('/home/%s' % project_username):
         log_text = 'Initial deploy on %s by %s, HEAD: %s' % (datetime.now(), local_user, git_head)
-        files.append(log_text, 'log/deploy.log')
+        files.append('log/deploy.log', log_text)
 
     print(green("""Project setup complete. You may need to patch the virtualenv
     to install things like mx. You may do so with the patch_virtualenv command."""))
@@ -195,7 +195,7 @@ def update_project(project_name, project_username=None, branch='master', wsgi_fi
     The wsgi path is relative to the target directory and defaults to
     deploy/project_username.wsgi.
     """
-    local_user = local('whoami')
+    local_user = local('whoami', capture=True)
     if not project_username:
         project_username = '%s-%s' % (project_name, branch)
     if not wsgi_file_path:
@@ -213,4 +213,4 @@ def update_project(project_name, project_username=None, branch='master', wsgi_fi
             git_head = run('git rev-parse HEAD')
         with cd('/home/%s' % project_username):
             log_text = 'Deploy on %s by %s. HEAD: %s' % (datetime.now(), local_user, git_head)
-            files.append(log_text, 'log/deploy.log')
+            files.append('log/deploy.log', log_text)
